@@ -114,7 +114,7 @@
       position: fixed;
       bottom: 60px; left: 0;
       width: 100%;
-      max-height: 300px;
+      max-height: 590px;
       background: #fff;
       border-top: 1px solid #ddd;
       overflow-y: auto;
@@ -190,6 +190,7 @@
   const cartInfoEl = document.getElementById("cart-info");
   const cartDetailsEl = document.getElementById("cart-details");
   const toggleCartBtn = document.getElementById("toggle-cart");
+  const overlayEl = document.getElementById("overlay");
 
   // 从JSON文件获取数据
   async function fetchProductsData() {
@@ -214,22 +215,38 @@
       console.error(`未找到分类: ${category}`);
       return;
     }
-    
+
     productsData[category].forEach(p => {
-      const qty = cart[p.id]?.qty || 0;
+      const uniqueId = `${category}-${p.id}`;
+      const qty = cart[uniqueId]?.qty || 0;
+
       const div = document.createElement("div");
       div.className = "product";
+
       div.innerHTML = `
         <img src="${p.img}" alt="">
         <div class="product-info">
           <h4>${p.name}</h4>
           <p>¥${p.price}</p>
         </div>
-        <div class="product-actions">
-          <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})">+</button>
-          <span id="qty-${p.id}">${qty}</span>
-        </div>
       `;
+
+      // 操作按钮区域
+      const actionsDiv = document.createElement("div");
+      actionsDiv.className = "product-actions";
+
+      const btn = document.createElement("button");
+      btn.textContent = "+";
+      btn.addEventListener("click", () => addToCart(uniqueId, p.name, p.price));
+
+      const qtySpan = document.createElement("span");
+      qtySpan.id = `qty-${uniqueId}`;
+      qtySpan.textContent = qty;
+
+      actionsDiv.appendChild(btn);
+      actionsDiv.appendChild(qtySpan);
+
+      div.appendChild(actionsDiv);
       productsEl.appendChild(div);
     });
   }
@@ -242,7 +259,7 @@
       cart[id].qty++;
     }
     updateCartInfo();
-    document.getElementById(`qty-${id}`).textContent = cart[id].qty; // 更新商品数量显示
+    document.getElementById(`qty-${id}`).textContent = cart[id].qty;
   }
 
   // 更新购物车信息
@@ -277,42 +294,36 @@
     }
   });
 
-  const overlayEl = document.getElementById("overlay");
+  // 切换购物车详情
+  toggleCartBtn.addEventListener("click", () => {
+    const isOpen = cartDetailsEl.style.display === "block";
+    if (isOpen) {
+      closeCart();
+    } else {
+      openCart();
+    }
+  });
 
-// 切换购物车详情
-toggleCartBtn.addEventListener("click", () => {
-  const isOpen = cartDetailsEl.style.display === "block";
-  if (isOpen) {
-    closeCart();
-  } else {
-    openCart();
+  // 打开购物车
+  function openCart() {
+    cartDetailsEl.style.display = "block";
+    overlayEl.style.display = "block";
+    toggleCartBtn.textContent = "关闭购物车";
   }
-});
 
-// 打开购物车
-function openCart() {
-  cartDetailsEl.style.display = "block";
-  overlayEl.style.display = "block";
-  toggleCartBtn.textContent = "关闭购物车";
-}
+  // 关闭购物车
+  function closeCart() {
+    cartDetailsEl.style.display = "none";
+    overlayEl.style.display = "none";
+    toggleCartBtn.textContent = "查看购物车";
+  }
 
-// 关闭购物车
-function closeCart() {
-  cartDetailsEl.style.display = "none";
-  overlayEl.style.display = "none";
-  toggleCartBtn.textContent = "查看购物车";
-}
+  // 点击遮罩关闭购物车
+  overlayEl.addEventListener("click", closeCart);
 
-// 点击遮罩关闭购物车
-overlayEl.addEventListener("click", closeCart);
-
-
-  // 将addToCart函数暴露到全局作用域，使其在HTML中可调用
-  window.addToCart = addToCart;
-  
   // 初始化：获取商品数据
   fetchProductsData();
-  
 </script>
+
 </body>
 </html>
