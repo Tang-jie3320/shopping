@@ -1,0 +1,28 @@
+{
+  "零食": [
+    { "id": 1, "name": "薯片", "price": 5, "img": "https://via.placeholder.com/80" },
+    { "id": 2, "name": "饼干", "price": 8, "img": "https://via.placeholder.com/80" },
+    { "id": 3, "name": "薯片1", "price": 5, "img": "https://via.placeholder.com/80" },
+    { "id": 4, "name": "饼干1", "price": 8, "img": "https://via.placeholder.com/80" },
+    { "id": 5, "name": "薯片2", "price": 5, "img": "https://via.placeholder.com/80" },
+    { "id": 6, "name": "饼干2", "price": 8, "img": "https://via.placeholder.com/80" },
+    { "id": 7, "name": "薯片3", "price": 5, "img": "https://via.placeholder.com/80" },
+    { "id": 8, "name": "饼干3", "price": 8, "img": "https://via.placeholder.com/80" }
+  ],
+  "酒": [
+    { "id": 3, "name": "红酒", "price": 120, "img": "https://via.placeholder.com/80" },
+    { "id": 4, "name": "啤酒", "price": 10, "img": "https://via.placeholder.com/80" }
+  ],
+  "蛋糕": [
+    { "id": 5, "name": "巧克力蛋糕", "price": 60, "img": "https://via.placeholder.com/80" },
+    { "id": 6, "name": "芝士蛋糕", "price": 55, "img": "https://via.placeholder.com/80" }
+  ],
+  "饮料": [
+    { "id": 7, "name": "可乐", "price": 4, "img": "https://via.placeholder.com/80" },
+    { "id": 8, "name": "雪碧", "price": 4, "img": "https://via.placeholder.com/80" }
+  ],
+  "水果": [
+    { "id": 9, "name": "苹果", "price": 6, "img": "https://via.placeholder.com/80" },
+    { "id": 10, "name": "香蕉", "price": 3, "img": "https://via.placeholder.com/80" }
+  ]
+}
