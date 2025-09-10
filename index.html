@@ -1,229 +1,252 @@
 <!DOCTYPE html>
 <html lang="zh">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>商品类别页</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background: #f8f8f8; }
-
-    .container {
-      display: flex;
-      height: calc(100vh - 60px);
-    }
-
-    /* 左边分类 */
-    .categories {
-      width: 25%;
-      background: #fff;
-      border-right: 1px solid #eee;
-      overflow-y: auto;
-    }
-    .categories div {
-      padding: 15px;
-      text-align: center;
-      border-bottom: 1px solid #f1f1f1;
-      cursor: pointer;
-    }
-    .categories div.active {
-      background: #ff5722;
-      color: #fff;
-      font-weight: bold;
-    }
-
-    /* 右边产品 */
-    .products {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-    }
-    .product {
-      background: #fff;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      padding: 10px;
-      display: flex;
-      align-items: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-    .product img {
-      width: 80px;
-      height: 80px;
-      border-radius: 6px;
-      object-fit: cover;
-      margin-right: 12px;
-    }
-    .product-info {
-      flex: 1;
-    }
-    .product-info h4 {
-      font-size: 14px;
-      margin-bottom: 6px;
-    }
-    .product-info p {
-      color: #ff5722;
-      font-weight: bold;
-    }
-    .product-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .product-actions button {
-      width: 28px;
-      height: 28px;
-      border: none;
-      background: #ff5722;
-      color: #fff;
-      border-radius: 50%;
-      font-size: 18px;
-      cursor: pointer;
-    }
-    .product-actions span {
-      min-width: 20px;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    /* 底部购物车 */
-    .cart-bar {
-      position: fixed;
-      bottom: 0; left: 0;
-      width: 100%;
-      height: 60px;
-      background: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 15px;
-      border-top: 1px solid #eee;
-      z-index: 1000;
-    }
-    .cart-bar button {
-      background: #ff5722;
-      color: #fff;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-    }
-
-    /* 购物车详情弹层 */
-    .cart-details {
-      position: fixed;
-      bottom: 60px; left: 0;
-      width: 100%;
-      max-height: 590px;
-      background: #fff;
-      border-top: 1px solid #ddd;
-      overflow-y: auto;
-      display: none;
-    }
-    .cart-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 15px;
-      border-bottom: 1px solid #f1f1f1;
-    }
-    /* 遮罩层 */
-.overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.4);
-  display: none;
-  z-index: 998; /* 保证在最上层 */
-}
-
-/* 调整购物车层级 */
-.cart-details {
-  position: fixed;
-  bottom: 60px; left: 0;
-  width: 100%;
-  max-height: 300px;
-  background: #fff;
-  border-top: 1px solid #ddd;
-  overflow-y: auto;
-  display: none;
-  z-index: 999; /* 高于遮罩 */
-}
-
-  </style>
-</head>
-<body>
-<!-- 遮罩层 -->
-<div class="overlay" id="overlay"></div>
-
-<div class="container">
-  <!-- 左边分类 -->
-  <div class="categories" id="categories">
-    <div class="active">零食</div>
-    <div>酒</div>
-    <div>蛋糕</div>
-    <div>饮料</div>
-    <div>水果</div>
-  </div>
-
-  <!-- 右边产品 -->
-  <div class="products" id="products">
-    <!-- 动态生成商品 -->
-  </div>
-</div>
-
-<!-- 底部购物车栏 -->
-<div class="cart-bar">
-  <span id="cart-info">购物车 (0) | 总价: ¥0</span>
-  <button id="toggle-cart">查看购物车</button>
-</div>
-
-<!-- 购物车详情 -->
-<div class="cart-details" id="cart-details"></div>
-
-<script>
-  // 声明全局变量
-  let productsData = {};
-  let cart = {};
-  
-  const categoriesEl = document.getElementById("categories");
-  const productsEl = document.getElementById("products");
-  const cartInfoEl = document.getElementById("cart-info");
-  const cartDetailsEl = document.getElementById("cart-details");
-  const toggleCartBtn = document.getElementById("toggle-cart");
-  const overlayEl = document.getElementById("overlay");
-
-  // 从JSON文件获取数据
-  async function fetchProductsData() {
-    try {
-      const response = await fetch('product.json');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>商品类别页</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
-      productsData = await response.json();
-      // 数据加载完成后，渲染初始商品
-      renderProducts("零食");
-    } catch (error) {
-      console.error('获取商品数据失败:', error);
-      productsEl.innerHTML = '<div style="text-align: center; padding: 20px;">数据加载失败，请刷新页面重试</div>';
-    }
-  }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f8f8;
+      }
 
-  // 渲染商品
-  function renderProducts(category) {
-    productsEl.innerHTML = "";
-    if (!productsData[category]) {
-      console.error(`未找到分类: ${category}`);
-      return;
-    }
+      .container {
+        display: flex;
+        height: calc(100vh - 60px);
+      }
 
-    productsData[category].forEach(p => {
-      const uniqueId = `${category}-${p.id}`;
-      const qty = cart[uniqueId]?.qty || 0;
+      /* 左边分类 */
+      .categories {
+        width: 25%;
+        background: #fff;
+        border-right: 1px solid #eee;
+        overflow-y: auto;
+      }
+      .categories div {
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid #f1f1f1;
+        cursor: pointer;
+      }
+      .categories div.active {
+        background: #ff5722;
+        color: #fff;
+        font-weight: bold;
+      }
 
-      const div = document.createElement("div");
-      div.className = "product";
+      /* 右边产品 */
+      .products {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+      }
+      .product {
+        background: #fff;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      }
+      .product img {
+        width: 80px;
+        height: 80px;
+        border-radius: 6px;
+        object-fit: cover;
+        margin-right: 12px;
+      }
+      .product-info {
+        flex: 1;
+      }
+      .product-info h4 {
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
+      .product-info p {
+        color: #ff5722;
+        font-weight: bold;
+      }
+      .product-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .product-actions button {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: #ff5722;
+        color: #fff;
+        border-radius: 50%;
+        font-size: 18px;
+        cursor: pointer;
+      }
+      .product-actions span {
+        min-width: 20px;
+        text-align: center;
+        font-size: 14px;
+      }
 
-      div.innerHTML = `
+      /* 底部购物车 */
+      .cart-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 15px;
+        border-top: 1px solid #eee;
+        z-index: 1000;
+      }
+      .cart-bar button {
+        background: #ff5722;
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+      }
+
+      /* 购物车详情弹层 */
+      .cart-details {
+        position: fixed;
+        bottom: 60px;
+        left: 0;
+        width: 100%;
+        max-height: 590px;
+        background: #fff;
+        border-top: 1px solid #ddd;
+        overflow-y: auto;
+        display: none;
+      }
+      .cart-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 15px;
+        border-bottom: 1px solid #f1f1f1;
+      }
+      /* 遮罩层 */
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        display: none;
+        z-index: 998; /* 保证在最上层 */
+      }
+
+      /* 调整购物车层级 */
+      .cart-details {
+        position: fixed;
+        bottom: 60px;
+        left: 0;
+        width: 100%;
+        max-height: 300px;
+        background: #fff;
+        border-top: 1px solid #ddd;
+        overflow-y: auto;
+        display: none;
+        z-index: 999; /* 高于遮罩 */
+      }
+      #watermark {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none; /* 不影响点击操作 */
+        z-index: 9999; /* 永远在最上层 */
+        background-repeat: repeat;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 遮罩层 -->
+    <div class="overlay" id="overlay"></div>
+
+    <div class="container">
+      <!-- 左边分类 -->
+      <div class="categories" id="categories">
+        <div class="active">零食</div>
+        <div>酒</div>
+        <div>蛋糕</div>
+        <div>饮料</div>
+        <div>水果</div>
+      </div>
+
+      <!-- 右边产品 -->
+      <div class="products" id="products">
+        <!-- 动态生成商品 -->
+      </div>
+    </div>
+
+    <!-- 底部购物车栏 -->
+    <div class="cart-bar">
+      <span id="cart-info">购物车 (0) | 总价: ¥0</span>
+      <button id="toggle-cart">查看购物车</button>
+    </div>
+
+    <!-- 购物车详情 -->
+    <div class="cart-details" id="cart-details"></div>
+    <div id="watermark"></div>
+
+    <script>
+      // 声明全局变量
+      let productsData = {};
+      let cart = {};
+
+      const categoriesEl = document.getElementById("categories");
+      const productsEl = document.getElementById("products");
+      const cartInfoEl = document.getElementById("cart-info");
+      const cartDetailsEl = document.getElementById("cart-details");
+      const toggleCartBtn = document.getElementById("toggle-cart");
+      const overlayEl = document.getElementById("overlay");
+
+      // 从JSON文件获取数据
+      async function fetchProductsData() {
+        try {
+          const response = await fetch("product.json");
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          productsData = await response.json();
+          // 数据加载完成后，渲染初始商品
+          renderProducts("零食");
+        } catch (error) {
+          console.error("获取商品数据失败:", error);
+          productsEl.innerHTML =
+            '<div style="text-align: center; padding: 20px;">数据加载失败，请刷新页面重试</div>';
+        }
+      }
+
+      // 渲染商品
+      function renderProducts(category) {
+        productsEl.innerHTML = "";
+        if (!productsData[category]) {
+          console.error(`未找到分类: ${category}`);
+          return;
+        }
+
+        productsData[category].forEach((p) => {
+          const uniqueId = `${category}-${p.id}`;
+          const qty = cart[uniqueId]?.qty || 0;
+
+          const div = document.createElement("div");
+          div.className = "product";
+
+          div.innerHTML = `
         <img src="${p.img}" alt="">
         <div class="product-info">
           <h4>${p.name}</h4>
@@ -231,99 +254,126 @@
         </div>
       `;
 
-      // 操作按钮区域
-      const actionsDiv = document.createElement("div");
-      actionsDiv.className = "product-actions";
+          // 操作按钮区域
+          const actionsDiv = document.createElement("div");
+          actionsDiv.className = "product-actions";
 
-      const btn = document.createElement("button");
-      btn.textContent = "+";
-      btn.addEventListener("click", () => addToCart(uniqueId, p.name, p.price));
+          const btn = document.createElement("button");
+          btn.textContent = "+";
+          btn.addEventListener("click", () =>
+            addToCart(uniqueId, p.name, p.price)
+          );
 
-      const qtySpan = document.createElement("span");
-      qtySpan.id = `qty-${uniqueId}`;
-      qtySpan.textContent = qty;
+          const qtySpan = document.createElement("span");
+          qtySpan.id = `qty-${uniqueId}`;
+          qtySpan.textContent = qty;
 
-      actionsDiv.appendChild(btn);
-      actionsDiv.appendChild(qtySpan);
+          actionsDiv.appendChild(btn);
+          actionsDiv.appendChild(qtySpan);
 
-      div.appendChild(actionsDiv);
-      productsEl.appendChild(div);
-    });
-  }
+          div.appendChild(actionsDiv);
+          productsEl.appendChild(div);
+        });
+      }
 
-  // 添加购物车
-  function addToCart(id, name, price) {
-    if (!cart[id]) {
-      cart[id] = { name, price, qty: 1 };
-    } else {
-      cart[id].qty++;
-    }
-    updateCartInfo();
-    document.getElementById(`qty-${id}`).textContent = cart[id].qty;
-  }
+      // 添加购物车
+      function addToCart(id, name, price) {
+        if (!cart[id]) {
+          cart[id] = { name, price, qty: 1 };
+        } else {
+          cart[id].qty++;
+        }
+        updateCartInfo();
+        document.getElementById(`qty-${id}`).textContent = cart[id].qty;
+      }
 
-  // 更新购物车信息
-  function updateCartInfo() {
-    let totalQty = 0, totalPrice = 0;
-    for (let id in cart) {
-      totalQty += cart[id].qty;
-      totalPrice += cart[id].price * cart[id].qty;
-    }
-    cartInfoEl.textContent = `购物车 (${totalQty}) | 总价: ¥${totalPrice}`;
-    renderCartDetails();
-  }
+      // 更新购物车信息
+      function updateCartInfo() {
+        let totalQty = 0,
+          totalPrice = 0;
+        for (let id in cart) {
+          totalQty += cart[id].qty;
+          totalPrice += cart[id].price * cart[id].qty;
+        }
+        cartInfoEl.textContent = `购物车 (${totalQty}) | 总价: ¥${totalPrice}`;
+        renderCartDetails();
+      }
 
-  // 渲染购物车详情
-  function renderCartDetails() {
-    cartDetailsEl.innerHTML = "";
-    for (let id in cart) {
-      const item = cart[id];
-      const div = document.createElement("div");
-      div.className = "cart-item";
-      div.innerHTML = `<span>${item.name} x ${item.qty}</span><span>¥${item.price * item.qty}</span>`;
-      cartDetailsEl.appendChild(div);
-    }
-  }
+      // 渲染购物车详情
+      function renderCartDetails() {
+        cartDetailsEl.innerHTML = "";
+        for (let id in cart) {
+          const item = cart[id];
+          const div = document.createElement("div");
+          div.className = "cart-item";
+          div.innerHTML = `<span>${item.name} x ${item.qty}</span><span>¥${
+            item.price * item.qty
+          }</span>`;
+          cartDetailsEl.appendChild(div);
+        }
+      }
 
-  // 分类点击
-  categoriesEl.addEventListener("click", e => {
-    if (e.target.tagName === "DIV") {
-      [...categoriesEl.children].forEach(el => el.classList.remove("active"));
-      e.target.classList.add("active");
-      renderProducts(e.target.textContent);
-    }
-  });
+      // 分类点击
+      categoriesEl.addEventListener("click", (e) => {
+        if (e.target.tagName === "DIV") {
+          [...categoriesEl.children].forEach((el) =>
+            el.classList.remove("active")
+          );
+          e.target.classList.add("active");
+          renderProducts(e.target.textContent);
+        }
+      });
 
-  // 切换购物车详情
-  toggleCartBtn.addEventListener("click", () => {
-    const isOpen = cartDetailsEl.style.display === "block";
-    if (isOpen) {
-      closeCart();
-    } else {
-      openCart();
-    }
-  });
+      // 切换购物车详情
+      toggleCartBtn.addEventListener("click", () => {
+        const isOpen = cartDetailsEl.style.display === "block";
+        if (isOpen) {
+          closeCart();
+        } else {
+          openCart();
+        }
+      });
 
-  // 打开购物车
-  function openCart() {
-    cartDetailsEl.style.display = "block";
-    overlayEl.style.display = "block";
-    toggleCartBtn.textContent = "关闭购物车";
-  }
+      // 打开购物车
+      function openCart() {
+        cartDetailsEl.style.display = "block";
+        overlayEl.style.display = "block";
+        toggleCartBtn.textContent = "关闭购物车";
+      }
 
-  // 关闭购物车
-  function closeCart() {
-    cartDetailsEl.style.display = "none";
-    overlayEl.style.display = "none";
-    toggleCartBtn.textContent = "查看购物车";
-  }
+      // 关闭购物车
+      function closeCart() {
+        cartDetailsEl.style.display = "none";
+        overlayEl.style.display = "none";
+        toggleCartBtn.textContent = "查看购物车";
+      }
 
-  // 点击遮罩关闭购物车
-  overlayEl.addEventListener("click", closeCart);
+      // 点击遮罩关闭购物车
+      overlayEl.addEventListener("click", closeCart);
 
-  // 初始化：获取商品数据
-  fetchProductsData();
-</script>
+      function setWatermark(text) {
+        const canvas = document.createElement("canvas");
+        canvas.width = 120;
+        canvas.height = 100;
+        const ctx = canvas.getContext("2d");
 
-</body>
+        ctx.rotate((-25 * Math.PI) / 180);
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.18)";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, 50, canvas.height / 2);
+
+        const watermarkDiv = document.getElementById("watermark");
+        watermarkDiv.style.backgroundImage = `url(${canvas.toDataURL(
+          "image/png"
+        )})`;
+        watermarkDiv.style.backgroundSize = "120px 100px"; // 控制间隔
+      }
+
+      // 初始化：获取商品数据 + 设置水印
+      fetchProductsData();
+      setWatermark("tang");
+    </script>
+  </body>
 </html>
